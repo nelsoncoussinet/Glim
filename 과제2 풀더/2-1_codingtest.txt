@@ -1,0 +1,32 @@
+#include <string>
+#include <vector>
+
+using namespace std;
+constexpr int InvalidInput = -1;
+
+namespace ProductPrices {
+    constexpr int kLambSkewers = 12000;
+    constexpr int kDrink = 2000;
+}
+
+int solution(int n, int k) {
+    // ensure input values are correct based on restrictions
+    if (n <= 0 || n >= 1000)
+    {
+        return InvalidInput;
+    }
+    
+    // there is always enough drink ordered for applying discount
+    if ((k < (n / 10)) || k >= 1000)
+    {
+        return InvalidInput;
+    }
+    
+    int answer = 0;
+    
+    answer += n * ProductPrices::kLambSkewers;
+    answer += k * ProductPrices::kDrink;
+    answer -= (n / 10) * ProductPrices::kDrink;
+
+    return answer;
+}

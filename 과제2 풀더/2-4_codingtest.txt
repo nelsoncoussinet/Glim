@@ -1,0 +1,28 @@
+#include <string>
+#include <vector>
+
+using namespace std;
+
+vector<int> solution(vector<int> arr, vector<bool> flag) {
+    if (arr.size() != flag.size() || arr.size() < 1 || arr.size() > 100)
+    {
+        return {};
+    }
+    
+    vector<int> answer{};
+    for (int i = 0; i < arr.size(); i++)
+    {
+        if (false == flag[i])
+        {
+            if (!answer.empty())
+            {
+                answer.resize(answer.size() - arr[i]);
+            }
+        }
+        else
+        {
+            answer.insert(answer.end(), arr[i] * 2, arr[i]);
+        }
+    }
+    return answer;
+}

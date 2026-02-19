@@ -1,0 +1,39 @@
+#include <string>
+#include <vector>
+
+using namespace std;
+constexpr int InvalidInput = -1;
+
+int solution(vector<vector<int>> board, int k) {
+    
+    std::size_t iMax = board.size();
+    if (iMax == 0 || iMax > 100)
+    {
+        // input is incorrect
+        return InvalidInput;
+    }
+    // all boards have the same size
+    std::size_t jMax = board[0].size();
+    if (jMax == 0 || jMax > 100)
+    {
+        // input is incorrect
+        return InvalidInput;
+    }
+    if (k <= 0 || k >= (iMax + jMax))
+    {
+        // k is bigger than the whole board
+        return InvalidInput;
+    }
+    int answer = 0;
+    for (size_t i = 0; i < iMax; i++)
+    {
+        for (size_t j = 0; j < jMax; j++)
+        {
+            // stop the loop. i + j is already more than k
+            if ((i + j > k))
+                break;
+            answer += board[i][j];
+        }
+    }
+    return answer;
+}

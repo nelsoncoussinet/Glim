@@ -1,0 +1,36 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+constexpr int InvalidInput = -1;
+
+int solution(vector<vector<int>> dots) {
+    if (4 != dots.size())
+    {
+        return InvalidInput;
+    }
+   for (const auto& p: dots)
+    {
+        if (2 != p.size())
+            return InvalidInput;
+    }
+    
+    int minX = dots[0][0];
+    int maxX = dots[0][0];
+    int minY = dots[0][1];
+    int maxY = dots[0][1];
+    
+    for (const auto& p: dots)
+    {
+        // 2D coordinate plane, parallel to axis.
+        // Just need to find lower x, y and higher x, y
+        minX = std::min(minX, p[0]);
+        maxX = std::max(maxX, p[0]);
+        minY = std::min(minY, p[1]);
+        maxY = std::max(maxY, p[1]);
+    }
+        
+    int answer = (maxX - minX) * (maxY - minY);
+    return answer;
+}
