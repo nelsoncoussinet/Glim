@@ -18,6 +18,7 @@ public:
 	bool UpdateCircleThickness(int newThickness);
 	void RandomPointsMove();
 	void ResetDisplay();
+	void DisplayPointsPositions();
 
 // CDialogEx datas
 #ifdef AFX_DESIGN_TIME
@@ -34,7 +35,6 @@ private:
 	CImage m_Image;
 	int m_ImageWidth;
 	int m_ImageHeight;
-	static constexpr COLORREF BLACK = RGB(0, 0, 0);
 	int grabbedPointIndex = -1;
 	CPoint m_points[3];
 	int m_pointCount = 0;

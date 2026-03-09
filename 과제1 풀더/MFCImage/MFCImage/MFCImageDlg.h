@@ -7,6 +7,8 @@
 
 #include "CDlgImage.h"
 
+#define WM_RANDOM_UPDATE (WM_USER + 1)
+
 // CMFCImageDlg dialog
 class CMFCImageDlg : public CDialogEx
 {
@@ -14,6 +16,7 @@ class CMFCImageDlg : public CDialogEx
 public:
 	CMFCImageDlg(CWnd* pParent = nullptr);	// standard constructor
 	CDlgImage* m_pDlgImage;
+	bool m_randomRunning = false;
 
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
@@ -33,6 +36,7 @@ protected:
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
+	afx_msg LRESULT OnRandomUpdate(WPARAM, LPARAM);
 	DECLARE_MESSAGE_MAP()
 public:
 	int m_pointRadius;

@@ -10,10 +10,7 @@
 #include "afxdialogex.h"
 #include "CDlgImage.h"
 #include "MFCImageDlg.h"
-
-namespace {
-	constexpr double PI = 3.14159265358979323846;
-}
+#include "Constant.h"
 
 // boîte de dialogue de CDlgImage
 
@@ -106,7 +103,7 @@ void CDlgImage::InitImage()
     m_ImageWidth = rect.Width();
 	m_ImageHeight = rect.Height();
 
-	m_Image.Create(m_ImageWidth, m_ImageHeight, 8);
+	m_Image.Create(m_ImageWidth, m_ImageHeight, BPP);
 	static RGBQUAD rgb[256];
 	for (int i = 0; i < 256; i++)
 	{
@@ -138,7 +135,7 @@ BYTE* CDlgImage::Pixel(int x, int y)
 
 void CDlgImage::OnLButtonDown(UINT nFlags, CPoint point)
 {
-	if (m_pointCount < 3)
+	if (m_pointCount < POINT_COUNT)
 	{
 		m_points[m_pointCount] = point;
 		m_pointCount++;
@@ -146,9 +143,9 @@ void CDlgImage::OnLButtonDown(UINT nFlags, CPoint point)
 		if (parentDlg)
 			parentDlg->UpdatePointsPositions(m_points, m_pointCount);
 	}
-	if (m_pointCount == 3)
+	if (m_pointCount == POINT_COUNT)
 	{
-		for (int i = 0; i < 3; ++i)
+		for (int i = 0; i < POINT_COUNT; ++i)
 		{
 			if (abs(point.x - m_points[i].x) <= m_pointRadius &&
 				abs(point.y - m_points[i].y) <= m_pointRadius)
@@ -165,7 +162,7 @@ void CDlgImage::OnLButtonDown(UINT nFlags, CPoint point)
 
 bool CDlgImage::UpdatePointRadius(int newRadius)
 {
-	if (newRadius < 1 || newRadius > 100)
+	if (newRadius < MIN_RADIUS || newRadius > MAX_RADIUS)
 		return false;
 	m_pointRadius = newRadius;
 	Invalidate();
@@ -174,7 +171,7 @@ bool CDlgImage::UpdatePointRadius(int newRadius)
 
 bool CDlgImage::UpdateCircleThickness(int newThickness)
 {
-	if (newThickness < 1 || newThickness > 50)
+	if (newThickness < MIN_THICKNESS || newThickness > MAX_THICKNESS)
 		return false;
 	m_circleThickness = newThickness;
 	Invalidate();
@@ -192,7 +189,6 @@ void CDlgImage::DrawCircle(void)
 	int rInner = max(0, radius - halfThick);  // avoid negative inner radius
 	int rOuter = radius + m_circleThickness;
 	// avoiding freeze when the circle is too big (points out of the screen)
-	const int MAX_COORD = 2000; // pixels
 	int yMin = max(center.y - rOuter, 0);
 	int yMax = min(center.y + rOuter, m_ImageHeight - 1);
 	int xMin = max(center.x - rOuter, 0);
@@ -228,7 +224,7 @@ void CDlgImage::DrawCircle(void)
 // compute circle function
 bool CDlgImage::ComputeCircleThrough3Points(CPoint& center, int &radius) const
 {
-	if (m_pointCount != 3)
+	if (m_pointCount != POINT_COUNT)
 		return false; // wrong amount of points
 	double x1 = m_points[0].x;
 	double y1 = m_points[0].y;
@@ -245,8 +241,10 @@ bool CDlgImage::ComputeCircleThrough3Points(CPoint& center, int &radius) const
 	double cx = ((x1 * x1 + y1 * y1) * (y2 - y3) + (x2 * x2 + y2 * y2) * (y3 - y1) + (x3 * x3 + y3 * y3) * (y1 - y2)) / D;
 	double cy = ((x1 * x1 + y1 * y1) * (x3 - x2) + (x2 * x2 + y2 * y2) * (x1 - x3) + (x3 * x3 + y3 * y3) * (x2 - x1)) / D;
 
+	// solution for managing rounding
 	center.x = (int)(cx + 0.5);
 	center.y = (int)(cy + 0.5);
+
 	radius = (int)(sqrt((cx - x1) * (cx - x1) + (cy - y1) * (cy - y1)) + 0.5);
 	return true;
 }
@@ -280,20 +278,22 @@ void CDlgImage::RandomPointsMove()
 
 	grabbedPointIndex = -1; // release in case we were dragging a point
 
-	for (int i = 0; i < 3; ++i)
+	for (int i = 0; i < POINT_COUNT; ++i)
 	{
 		m_points[i].x = rand() % maxX;  // x between 0 and maxX-1
 		m_points[i].y = rand() % maxY;  // y between 0 and maxY-1
 	}
-	m_pointCount = 3;
-	CMFCImageDlg* parentDlg = dynamic_cast<CMFCImageDlg*>(GetParent());
-	if (parentDlg)
-		parentDlg->UpdatePointsPositions(m_points, m_pointCount);
+	m_pointCount = POINT_COUNT;
 }
 
 void CDlgImage::ResetDisplay()
 {
 	m_pointCount = 0;
+	DisplayPointsPositions();
+}
+
+void CDlgImage::DisplayPointsPositions()
+{
 	CMFCImageDlg* parentDlg = dynamic_cast<CMFCImageDlg*>(GetParent());
 	if (parentDlg)
 		parentDlg->UpdatePointsPositions(m_points, m_pointCount);

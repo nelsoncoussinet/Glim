@@ -8,10 +8,13 @@
 #include "MFCImageDlg.h"
 #include "afxdialogex.h"
 #include "Resource.h"
+#include "Constant.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
+#include <thread>
+#include <chrono>
 
 // CAboutDlg dialog used for App About
 
@@ -52,8 +55,8 @@ END_MESSAGE_MAP()
 
 CMFCImageDlg::CMFCImageDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MFCIMAGE_DIALOG, pParent)
-	, m_pointRadius(1)
-	, m_circleThickness(1)
+	, m_pointRadius(MIN_RADIUS)
+	, m_circleThickness(MIN_THICKNESS)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -62,9 +65,9 @@ void CMFCImageDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Text(pDX, IDC_EDIT1, m_pointRadius);
-	DDV_MinMaxInt(pDX, m_pointRadius, 1, 100);
+	DDV_MinMaxInt(pDX, m_pointRadius, MIN_RADIUS, MAX_RADIUS);
 	DDX_Text(pDX, IDC_EDIT2, m_circleThickness);
-	DDV_MinMaxInt(pDX, m_circleThickness, 1, 50);
+	DDV_MinMaxInt(pDX, m_circleThickness, MIN_THICKNESS, MAX_THICKNESS);
 	DDX_Control(pDX, IDC_STATICPOINT1, m_PointText1);
 	DDX_Control(pDX, IDC_STATICPOINT2, m_PointText2);
 	DDX_Control(pDX, IDC_STATICPOINT3, m_PointText3);
@@ -82,6 +85,7 @@ BEGIN_MESSAGE_MAP(CMFCImageDlg, CDialogEx)
 	ON_EN_KILLFOCUS(IDC_POINT_RAD, &CMFCImageDlg::OnKillfocusPointRad)
 	ON_EN_KILLFOCUS(IDC_CIRCLE_THICK, &CMFCImageDlg::OnKillfocusCircleThick)
 	ON_BN_CLICKED(IDC_BTN_RESET, &CMFCImageDlg::OnBnClickedBtnReset)
+	ON_MESSAGE(WM_RANDOM_UPDATE, &CMFCImageDlg::OnRandomUpdate)
 END_MESSAGE_MAP()
 
 
@@ -116,13 +120,13 @@ BOOL CMFCImageDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// Set big icon
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
-	MoveWindow(0, 0, 1280, 800);
+	MoveWindow(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 
 	CRect rcClient;
 	GetClientRect(&rcClient); // real size of the main window
 
 	// 150px kept for the UI above
-	rcClient.top += 150;
+	rcClient.top += WINDOW_UI_HEIGHT;
 
 	m_pDlgImage = new CDlgImage;
 	m_pDlgImage->Create(IDD_CDlgImage, this);
@@ -195,11 +199,41 @@ void CMFCImageDlg::OnDestroy()
 	delete m_pDlgImage;
 }
 
+void threadProcess(CWnd* parent)
+{
+	CMFCImageDlg* dlg = dynamic_cast<CMFCImageDlg*>(parent);
+	if (dlg == nullptr)
+		return;
+
+	for (int i = 0; i < RANDOM_ITERATIONS; i++)
+	{
+		dlg->m_pDlgImage->RandomPointsMove();
+		dlg->PostMessage(WM_RANDOM_UPDATE);
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(RANDOM_DELAY_MS));
+	}
+	dlg->m_randomRunning = false;
+}
+
 void CMFCImageDlg::OnBnClickedBtnRandmv()
 {
-	m_pDlgImage->RandomPointsMove();
+	// boolean protecting to create an other thread if one is already running
+	if (m_randomRunning)
+		return;
 
-	m_pDlgImage->Invalidate(); // forcer le redessin de la zone client du CDlgImage
+	m_randomRunning = true;
+
+	std::thread my_thread(threadProcess, this);
+	my_thread.detach();
+}
+
+LRESULT CMFCImageDlg::OnRandomUpdate(WPARAM, LPARAM)
+{
+	m_pDlgImage->DisplayPointsPositions();
+
+	m_pDlgImage->Invalidate();
+
+	return 0;
 }
 
 void CMFCImageDlg::UpdatePointsPositions(const CPoint(&points)[3], int NbToDisplay)
